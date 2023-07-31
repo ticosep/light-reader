@@ -1,17 +1,16 @@
-import pdfreader
 import argparse
 import glob
-from pdfreader import SimplePDFViewer
+import easyocr
+from pdf2image import convert_from_path
 
 
 def generateCsvFile(filesPaths):
-    print()
+    count = 0
     for path in filesPaths:
-        fd = open(path, "rb")
-        viewer = SimplePDFViewer(fd)
-        for canvas in viewer:
-            pageStrings = canvas.strings
-            print(pageStrings)
+        images = convert_from_path(
+            path, poppler_path=r"C:\Users\tico\Downloads\Release-23.07.0-0\poppler-23.07.0\Library\bin")
+        images[0].save(f'image_{count}.png', 'PNG')
+        count += 1
 
 
 def getFilesPaths(filesFolderPath):

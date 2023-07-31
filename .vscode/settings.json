@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": true,
+    "python.analysis.extraPaths": [
+        "C:/Users/tico/Desktop/light-reader/venv/Lib/site-packages"
+    ]
+}
