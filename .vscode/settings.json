@@ -1,6 +1,6 @@
 {
-    "editor.formatOnSave": true,
-    "python.analysis.extraPaths": [
-        "C:/Users/tico/Desktop/light-reader/venv/Lib/site-packages"
-    ]
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "python.formatting.provider": "none"
 }

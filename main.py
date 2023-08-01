@@ -1,15 +1,51 @@
 import argparse
 import glob
 import easyocr
+import os
+from PIL import Image
 from pdf2image import convert_from_path
+
+
+def cropImageForFastProcess(image, count):
+    left = image.width / 2
+    top = 750
+    right = image.width - 1800
+    bottom = image.height / 3.7
+
+
+    image.crop((left, top, right, bottom)).save(
+        f'image_{count}.png', 'PNG')
+
+
+def clearImage(imagePath):
+    print("Clearing old image")
+    if os.path.exists(imagePath):
+        try:
+            os.remove(imagePath)
+            print("removed" + imagePath)
+        except OSError as e:
+            print("Failed with:", e.strerror)
+            print("Error code:", e.code)
 
 
 def generateCsvFile(filesPaths):
     count = 0
+    reader = easyocr.Reader(['pt'], verbose=False, gpu=False, quantize=True)
     for path in filesPaths:
+        imageName = f'image_{count}.png'
+        imagePath = './' + imageName
+
+        clearImage(imagePath)
+
         images = convert_from_path(
-            path, poppler_path=r"C:\Users\tico\Downloads\Release-23.07.0-0\poppler-23.07.0\Library\bin")
-        images[0].save(f'image_{count}.png', 'PNG')
+            path, poppler_path=r"C:\Users\tico\Downloads\Release-23.07.0-0\poppler-23.07.0\Library\bin", first_page=1, last_page=1, dpi=800, grayscale=True)
+
+        cropImageForFastProcess(images[0], count)
+
+        result = reader.readtext(imagePath, detail = 0)
+
+        print(result)
+
         count += 1
 
 
