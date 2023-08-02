@@ -6,10 +6,11 @@ import cv2
 import os
 import csv
 import time
+import boundingBoxSorting
 from pdf2image import convert_from_path
 
 
-def cropImageForFastProcess(image, count):
+def getCroppedImagesPath(image, count):
     image.save(
         f'image_{count}.png', 'PNG')
     imageCv2 = cv2.imread(f'image_{count}.png')
@@ -33,50 +34,57 @@ def cropImageForFastProcess(image, count):
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
     area_treshold = 4000
     count2 = 0
+    croppedImages = []
     for c in cnts:
         if cv2.contourArea(c) > area_treshold:
             x, y, w, h = cv2.boundingRect(c)
+            imagePath = f'image_{count}_{count2}.png'
+            print(imagePath)
             image.crop((x, y, x + w, y + h)).save(
-                f'image_{count}_{count2}.png', 'PNG')
+                imagePath, 'PNG')
+            croppedImages.append("./" + imagePath)
         count2 += 1
-    print(cnts)
+    return croppedImages
 
 
-def clearImage(imagePath):
-    print("Deleting old image")
-    if os.path.exists(imagePath):
-        try:
-            os.remove(imagePath)
-            print("removed" + imagePath)
-        except OSError as e:
-            print("Failed with:", e.strerror)
-            print("Error code:", e.code)
+def clearImages():
+    print("Deleting old images")
+    dirName = "./"
+    files = os.listdir(dirName)
+
+    for file in files:
+        if file.endswith(".png"):
+            try:
+                path = os.path.join(dirName, file)
+                os.remove(path)
+                print("removed: " + path)
+            except OSError as e:
+                print("Failed with:", e.strerror)
+                print("Error code:", e.code)
 
 
 def getBillsInfo(filesPaths):
     count = 0
     reader = easyocr.Reader(['pt'], verbose=False, gpu=False, quantize=True)
     results = []
+    sorter = boundingBoxSorting.BoundingBoxSorting()
+
     for path in filesPaths:
-        imageName = f'image_{count}.png'
-        imagePath = './' + imageName
-
-        clearImage(imagePath)
-
         print("Converting PDF to image")
         images = convert_from_path(
             path, poppler_path=r"C:\Users\tico\Downloads\Release-23.07.0-0\poppler-23.07.0\Library\bin", first_page=1, last_page=1, dpi=800, grayscale=True)
 
         print("Cropping image for better usage")
-        cropImageForFastProcess(images[0], count)
+        croppedImages = getCroppedImagesPath(images[0], count)
 
-        print("Extracting information form the bill image")
-        result = reader.readtext(
-            imagePath, detail=0, batch_size=10, height_ths=10)
+        for croppedImage in croppedImages:
+            print("Extracting information form the bill image")
 
-        results.append(result)
+            result = reader.readtext(croppedImage, batch_size=10)
+            sorter.getSortedValues(result)
+            results.append(result)
 
-        print(result)
+            print(result)
 
         count += 1
 
@@ -127,6 +135,8 @@ def main():
 
     if not paths:
         return
+
+    clearImages()
 
     results = getBillsInfo(paths)
 
